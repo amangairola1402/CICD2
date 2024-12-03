@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic Role Labeling API</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .result-container {
+            margin-top: 20px;
+        }
+        .role-item {
+            background-color: #e9ecef;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Semantic Role Labeling</h1>
+        <form id="role-form">
+            <div class="form-group">
+                <label for="sentence">Enter a Sentence:</label>
+                <input type="text" class="form-control" id="sentence" placeholder="e.g., John kicked the ball." required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Get Roles</button>
+        </form>
+        
+        <div id="result" class="result-container"></div>
+    </div>
+
+    <script>
+        document.getElementById('role-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const sentence = document.getElementById('sentence').value;
+
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sentence })
+                });
+
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                displayError("An error occurred while processing your request. Please try again.");
+            }
+        });
+
+        function displayResults(data) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = ''; // Clear previous results
+            
+            if (data.error) {
+                displayError(data.error);
+                return;
+            }
+
+            const rolesList = data.roles.map(role => `
+                <div class="role-item">
+                    <strong>${role.type}:</strong> ${role.entity}
+                    <p>${role.description}</p>
+                </div>
+            `).join('');
+
+            resultDiv.innerHTML = `
+                <h3>Results for: "${data.sentence}"</h3>
+                <h4>Predicted Roles:</h4>
+                ${rolesList}
+            `;
+        }
+
+        function displayError(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                    ${message}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
